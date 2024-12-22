@@ -16,117 +16,197 @@
 
 #include "wifi_pro.h"
 #include "server_cfg.h"
-#include "dht11.h"
-#include "light_sen.h"
-#include "mois.h"
 #include "mqtt_cfg.h" 
 #include "shared.h"
-#include "camera_lib.h"
 
-// Khai báo chân GPIO cho các nút nhấn
-#define BUTTON_1 GPIO_NUM_16 //Reset button
-#define BUTTON_2 GPIO_NUM_17 //Restart button
+#define EVENT_CAMERA_INIT_DONE BIT0
+// Khai báo Event Group
+EventGroupHandle_t event_group;
 
-// Semaphore cho từng nút nhấn
-SemaphoreHandle_t xSemaphoreButton1 = NULL;
-SemaphoreHandle_t xSemaphoreButton2 = NULL;
+#define BOARD_ESP32CAM_AITHINKER
+#define CAM_PIN_PWDN 32
+#define CAM_PIN_RESET -1 //software reset will be performed
+#define CAM_PIN_XCLK 0
+#define CAM_PIN_SIOD 26
+#define CAM_PIN_SIOC 27
+
+#define CAM_PIN_D7 35
+#define CAM_PIN_D6 34
+#define CAM_PIN_D5 39
+#define CAM_PIN_D4 36
+#define CAM_PIN_D3 21
+#define CAM_PIN_D2 19
+#define CAM_PIN_D1 18
+#define CAM_PIN_D0 5
+#define CAM_PIN_VSYNC 25
+#define CAM_PIN_HREF 23
+#define CAM_PIN_PCLK 22
+// Định nghĩa các tham số chỉnh kích thước ảnh và buffer chứa ảnh
+#define CAMERA_FRAME_SIZE FRAMESIZE_QVGA // Kích thước khung hình (240x240)
+#define CAMERA_JPEG_QUALITY 12           // Chất lượng JPEG (0-63)#define CAMERA_BUFFER_SIZE 64 * 1024     // 64KB buffer cho ảnh JPEG
+#define CAMERA_BUFFER_SIZE 64 * 1024     // 64KB buffer cho ảnh JPEG
+char image_buffer[CAMERA_BUFFER_SIZE]; // Khai báo biến string toàn cục
+
+// Cấu hình camera
+static camera_config_t camera_config = {
+    .pin_pwdn = CAM_PIN_PWDN,
+    .pin_reset = CAM_PIN_RESET,
+    .pin_xclk = CAM_PIN_XCLK,
+    .pin_sccb_sda = CAM_PIN_SIOD,
+    .pin_sccb_scl = CAM_PIN_SIOC,
+
+    .pin_d7 = CAM_PIN_D7,
+    .pin_d6 = CAM_PIN_D6,
+    .pin_d5 = CAM_PIN_D5,
+    .pin_d4 = CAM_PIN_D4,
+    .pin_d3 = CAM_PIN_D3,
+    .pin_d2 = CAM_PIN_D2,
+    .pin_d1 = CAM_PIN_D1,
+    .pin_d0 = CAM_PIN_D0,
+    .pin_vsync = CAM_PIN_VSYNC,
+    .pin_href = CAM_PIN_HREF,
+    .pin_pclk = CAM_PIN_PCLK,
+
+    //XCLK 20MHz or 10MHz for OV2640 double FPS (Experimental)
+    .xclk_freq_hz = 20000000,
+    .ledc_timer = LEDC_TIMER_0,
+    .ledc_channel = LEDC_CHANNEL_0,
+
+    .pixel_format = PIXFORMAT_RGB565, //YUV422,GRAYSCALE,RGB565,JPEG
+    .frame_size = FRAMESIZE_QVGA,    //QQVGA-UXGA, For ESP32, do not use sizes above QVGA when not JPEG. The performance of the ESP32-S series has improved a lot, but JPEG mode always gives better frame rates.
+
+    .jpeg_quality = 12, //0-63, for OV series camera sensors, lower number means higher quality
+    .fb_count = 1,       //When jpeg mode is used, if fb_count more than one, the driver will work in continuous mode.
+    .fb_location = CAMERA_FB_IN_PSRAM,
+    .grab_mode = CAMERA_GRAB_WHEN_EMPTY,
+};
+
+
+static esp_err_t init_camera(void)
+{
+    //initialize the camera
+    esp_err_t err = esp_camera_init(&camera_config);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE("CAMERA", "Camera Init Failed");
+        return err;
+    }
+    // Sau khi khởi tạo thành công, set bit trong Event Group
+    xEventGroupSetBits(event_group, EVENT_CAMERA_INIT_DONE);
+    return ESP_OK;
+}
+
+/*
+// Hàm chụp ảnh và trả về chuỗi chứa ảnh
+char* captureImage() {
+    camera_fb_t* fb = esp_camera_fb_get();
+    if (!fb) {
+        ESP_LOGE("CAMERA", "Camera capture failed");
+        return NULL;
+    }
+
+    // Cấp phát bộ nhớ cho buffer ảnh nếu cần
+    if (image_buffer == NULL || fb->len > CAMERA_BUFFER_SIZE) {
+        if (image_buffer) free(image_buffer); // Giải phóng bộ nhớ cũ
+        image_buffer = (uint8_t*) malloc(fb->len); // Cấp phát bộ nhớ mới
+        if (image_buffer == NULL) {
+            ESP_LOGE("CAMERA", "Failed to allocate memory for image");
+            esp_camera_fb_return(fb);
+            return NULL;
+        }
+    }
+
+    // Sao chép dữ liệu ảnh vào buffer
+    memcpy(image_buffer, fb->buf, fb->len);
+
+    // Trả lại buffer cho driver
+    esp_camera_fb_return(fb);
+
+    ESP_LOGI("CAMERA", "Image captured successfully");
+    return (char*)image_buffer;
+}
+*/
+
+// Semaphore 
 SemaphoreHandle_t xSemaphoreCamera = NULL;
 
 EventGroupHandle_t event_group;
 const int EVENT_INIT_DONE = BIT0;
 
-// Hàm xử lý ngắt ISR cho BUTTON_1
-void IRAM_ATTR button1_isr_handler(void* arg) {
-    xSemaphoreGiveFromISR(xSemaphoreButton1, NULL);
-}
-
-// Hàm xử lý ngắt ISR cho BUTTON_2
-void IRAM_ATTR button2_isr_handler(void* arg) {
-    xSemaphoreGiveFromISR(xSemaphoreButton2, NULL);
-}
-
-// Task xử lý BUTTON_1
-void button1_task(void* arg) {
+void cameraTask(void *arg) {
+    // Chờ cho đến khi camera được khởi tạo xong
+    xEventGroupWaitBits(event_group, EVENT_CAMERA_INIT_DONE, pdTRUE, pdTRUE, portMAX_DELAY);
+    
     while (1) {
-        if (xSemaphoreTake(xSemaphoreButton1, portMAX_DELAY) == pdTRUE) {
-            printf("Button 1 pressed! Restart\n");
+        ESP_LOGI("MAIN", "Taking picture...");
+        camera_fb_t *pic = esp_camera_fb_get();
 
-            // Debounce cho BUTTON_1
-            gpio_intr_disable(BUTTON_1);
-            while (!gpio_get_level(BUTTON_1)) {
-                vTaskDelay(5 / portTICK_PERIOD_MS);
-            }
-            vTaskDelay(10 / portTICK_PERIOD_MS);
-            gpio_intr_enable(BUTTON_1);
-
-            //Restart module ESP
-            esp_restart();
+        if (pic == NULL) {
+            ESP_LOGE("MAIN", "Camera capture failed");
+            vTaskDelay(5000 / portTICK_PERIOD_MS); // Đợi và thử lại
+            continue;
         }
+
+        // Lấy thông tin kích thước ảnh
+        size_t width = pic->width;
+        size_t height = pic->height;
+
+        ESP_LOGI("MAIN", "Picture taken! Its size was: %zu bytes", pic->len);
+        // Gửi ảnh qua MQTT
+        pictureSend(client, pic->buf, pic->len, width, height, "/camera/image");
+        //pictureSend(client, pic->buf, pic->len, "/camera/image");
+        //testSend(client);
+
+        esp_camera_fb_return(pic);
+
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
     }
 }
 
-// Task xử lý BUTTON_2
-void button2_task(void* arg) {
-    while (1) {
-        if (xSemaphoreTake(xSemaphoreButton2, portMAX_DELAY) == pdTRUE) {
-            printf("Button 2 pressed! Reset\n");
+/*
+#define IMAGE_BUFFER_SIZE  153600 // Kích thước ảnh cụ thể (153600 bytes)
 
-            // Debounce cho BUTTON_2
-            gpio_intr_disable(BUTTON_2);
-            while (!gpio_get_level(BUTTON_2)) {
-                vTaskDelay(5 / portTICK_PERIOD_MS);
-            }
-            vTaskDelay(10 / portTICK_PERIOD_MS);
-            gpio_intr_enable(BUTTON_2);
+static uint8_t* image_buffer = NULL; // Biến chứa bộ đệm ảnh
+void cameraTask(void *pvParameters) {
+    camera_fb_t *pic = NULL;
 
-            // Xóa dữ liệu NVS
-            esp_err_t err = nvs_flash_erase();
-            if (err == ESP_OK) {
-                printf("NVS erased successfully.\n");
-            } else {
-                printf("Failed to erase NVS: %s\n", esp_err_to_name(err));
-            }
+    // Lấy ảnh từ camera
+    pic = esp_camera_fb_get();
+    if (!pic) {
+        ESP_LOGE("CAMERA", "Camera capture failed");
+        vTaskDelete(NULL);
+        return;
+    }
 
-            // Restart ESP32
-            esp_restart();
+    // Kiểm tra kích thước bộ đệm cần thiết và cấp phát bộ nhớ mới nếu cần
+    if (image_buffer == NULL || pic->len != IMAGE_BUFFER_SIZE) {
+        if (image_buffer) {
+            free(image_buffer); // Giải phóng bộ nhớ cũ nếu có
+        }
+        
+        // Cấp phát bộ nhớ đủ cho ảnh mới (153600 bytes)
+        image_buffer = (uint8_t*) malloc(pic->len);
+        if (image_buffer == NULL) {
+            ESP_LOGE("CAMERA", "Failed to allocate memory for image");
+            esp_camera_fb_return(pic);
+            vTaskDelete(NULL);
+            return;
         }
     }
+
+    // Sao chép dữ liệu ảnh vào bộ đệm đã cấp phát
+    memcpy(image_buffer, pic->buf, pic->len);
+    ESP_LOGI("CAMERA", "Captured image of size %d bytes", pic->len);
+
+    // Xử lý ảnh hoặc lưu ảnh tại đây
+
+    // Giải phóng bộ nhớ ảnh sau khi xử lý xong
+    esp_camera_fb_return(pic);
+
+    // Tạm dừng task này một chút (nếu cần)
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
 }
-
-// Hàm khởi tạo các nút nhấn và LED
-void init_gpio(void) {
-    // Cấu hình GPIO cho các nút nhấn
-    gpio_config_t btn_config = {
-        .pin_bit_mask = (1ULL << BUTTON_1) | (1ULL << BUTTON_2),
-        .mode = GPIO_MODE_INPUT,
-        .pull_up_en = GPIO_PULLUP_ENABLE,
-        .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_NEGEDGE,
-    };
-    gpio_config(&btn_config);
-
-    // Cài đặt ISR cho từng nút nhấn
-    gpio_install_isr_service(0);
-    gpio_isr_handler_add(BUTTON_1, button1_isr_handler, NULL);
-    gpio_isr_handler_add(BUTTON_2, button2_isr_handler, NULL);
-}
-
-void cameraTask(void *arg){
-    while(1){
-        ESP_LOGI("MAIN", "Main program running...");
-        //dataSend(client);
-        // Chụp ảnh và lấy chuỗi chứa ảnh
-        char* image_string = captureImage();
-        if (image_string) {
-            printf("Image captured successfully\n");
-            // Xử lý chuỗi ảnh, ví dụ: gửi qua mạng hoặc lưu trữ
-        } else {
-            printf("Failed to capture image\n");
-        }
-        vTaskDelay(4000/portTICK_PERIOD_MS);
-    }
-}
-
+*/
 void app_main(void) {
     //Initialize NVS
     esp_err_t ret = nvs_flash_init();
@@ -135,34 +215,29 @@ void app_main(void) {
       ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
-    //Init camera
-    if (initCamera() != ESP_OK) {
-        printf("Camera initialization failed\n");
-        return;
-    }
 
-     // Khởi tạo Event Group
+    //Khởi tạo Event Group
     shared_event_group_init();
+    // Khởi tạo Event Group
+    event_group = xEventGroupCreate();
 
     initialise_wifi();
 
-    // Chờ đợi sự kiện EVENT_CLIENT_POSTED
+    //Chờ đợi sự kiện EVENT_CLIENT_POSTED
     printf("Waiting for init node...\n");
     xEventGroupWaitBits(shared_event_group, EVENT_CLIENT_POSTED, pdTRUE, pdTRUE, portMAX_DELAY);
     printf("Init Wifi and Server done!\n");
 
-
-    // Tạo Semaphore cho từng nút nhấn
-    xSemaphoreButton1 = xSemaphoreCreateBinary();
-    xSemaphoreButton2 = xSemaphoreCreateBinary();
+    // Khởi tạo camera và kiểm tra lỗi
+    if (init_camera() != ESP_OK) {
+        ESP_LOGE("MAIN", "Camera initialization failed");
+        return;
+    }
     xSemaphoreCamera = xSemaphoreCreateBinary();
 
-    // Tạo task xử lý từng task, nút nhấn
-    xTaskCreate(button1_task, "Button1Task", 2048, NULL, 10, NULL);
-    xTaskCreate(button2_task, "Button2Task", 2048, NULL, 10, NULL);
-    xTaskCreate(cameraTask, "CameraTask", 2096, NULL, 9, NULL);
+    vTaskDelay(2000/ portTICK_PERIOD_MS);
+    mqtt_app_start();
 
-    // Khởi tạo các nút nhấn và LED
-    init_gpio();
-
+    // Tạo task xử lý từng task
+    xTaskCreate(cameraTask, "CameraTask", 8192, NULL, 9, NULL);
 }

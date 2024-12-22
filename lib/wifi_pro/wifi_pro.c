@@ -167,7 +167,7 @@ void sta_connect_handler(void* arg, esp_event_base_t event_base,
         //printf("STA connected successfully.\n");
 
         // Lưu SSID và Password vào NVS
-        save_wifi_credentials(sta_ssid, sta_password);
+        //save_wifi_credentials(sta_ssid, sta_password);
 
         // Đặt bit sự kiện
         xEventGroupSetBits(wifi_event_group, WIFI_STA_CONNECTED_BIT);

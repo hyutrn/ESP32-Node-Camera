@@ -11,5 +11,4 @@ idf_component_register(SRCS ${SOURCES}
                     REQUIRES client_cfg
                     REQUIRES event_lib
                     REQUIRES nvs_storage
-                    REQUIRES camera_lib
                     )

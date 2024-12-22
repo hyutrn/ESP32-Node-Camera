@@ -424,32 +424,12 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/Users/TrongHuy/ProjectIDF/camera_node_v1/build/esp-idf/event_lib/cmake_install.cmake")
-endif()
-
-if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  # Include the install script for the subdirectory.
-  include("C:/Users/TrongHuy/ProjectIDF/camera_node_v1/build/esp-idf/light_sensor/cmake_install.cmake")
-endif()
-
-if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  # Include the install script for the subdirectory.
-  include("C:/Users/TrongHuy/ProjectIDF/camera_node_v1/build/esp-idf/moisture/cmake_install.cmake")
-endif()
-
-if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  # Include the install script for the subdirectory.
   include("C:/Users/TrongHuy/ProjectIDF/camera_node_v1/build/esp-idf/mqtt_cfg/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/Users/TrongHuy/ProjectIDF/camera_node_v1/build/esp-idf/dht11/cmake_install.cmake")
-endif()
-
-if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  # Include the install script for the subdirectory.
-  include("C:/Users/TrongHuy/ProjectIDF/camera_node_v1/build/esp-idf/client_cfg/cmake_install.cmake")
+  include("C:/Users/TrongHuy/ProjectIDF/camera_node_v1/build/esp-idf/event_lib/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
@@ -464,6 +444,6 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/Users/TrongHuy/ProjectIDF/camera_node_v1/build/esp-idf/camera_lib/cmake_install.cmake")
+  include("C:/Users/TrongHuy/ProjectIDF/camera_node_v1/build/esp-idf/client_cfg/cmake_install.cmake")
 endif()
 

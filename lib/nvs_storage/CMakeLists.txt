@@ -6,6 +6,5 @@ idf_component_register(SRCS ${SOURCES}
                     REQUIRES server_cfg
                     REQUIRES wifi_pro
                     REQUIRES mqtt
-                    REQUIRES dht11
                     REQUIRES esp_system
 )
