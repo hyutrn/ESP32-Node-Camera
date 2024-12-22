@@ -16,19 +16,19 @@ This project implements an ESP32-based camera node using the ESP-IDF framework. 
 
 ## Hardware Requirements
 
-ESP32-CAM Module: AI-Thinker variant.
+- ESP32-CAM Module: AI-Thinker variant.
 
-Micro-USB Cable: For programming and power.
+- Micro-USB Cable: For programming and power.
 
-Wi-Fi Network: Required for MQTT communication.
+- Wi-Fi Network: Required for MQTT communication.
 
 ## Software Requirements
 
-ESP-IDF: Development framework for ESP32.
+- ESP-IDF: Development framework for ESP32.
 
-MQTT Broker: A running MQTT broker (e.g., Mosquitto, AWS IoT, or Flespi).
+- MQTT Broker: A running MQTT broker (e.g., Mosquitto, AWS IoT, or Flespi).
 
-cJSON Library: For constructing JSON payloads.
+- cJSON Library: For constructing JSON payloads.
 
 ## Project Structure
 
@@ -83,11 +83,11 @@ cJSON Library: For constructing JSON payloads.
 
 ### Event Groups
 
-Event Groups are used for task synchronization:
+- Event Groups are used for task synchronization:
 
-EVENT_CAMERA_INIT_DONE: Indicates that the camera initialization is complete.
+- EVENT_CAMERA_INIT_DONE: Indicates that the camera initialization is complete.
 
-EVENT_CLIENT_POSTED: Signifies that the Wi-Fi and server setup are finished.
+- EVENT_CLIENT_POSTED: Signifies that the Wi-Fi and server setup are finished.
 
 ### Task Description
 
@@ -112,16 +112,16 @@ EVENT_CLIENT_POSTED: Signifies that the Wi-Fi and server setup are finished.
 
 - The pictureSend function in mqtt_cfg.c constructs the JSON payload and publishes it to the broker.
 
-Usage
+## Usage
 
-## Clone the repository:
+### Clone the repository:
 
 ```bash
 git clone https://github.com/hyutrn/ESP32_Node_Camera.git
 cd ESP32_Node_Camera
 ```
 
-## Configure the project:
+### Configure the project:
 
 ```bash 
 idf.py menuconfig
@@ -131,34 +131,34 @@ idf.py menuconfig
 
 - Configure the MQTT broker settings.
 
-## Build and flash the firmware:
+### Build and flash the firmware:
 
 ```bash 
 idf.py build
 idf.py flash
 ```
-## Monitor the device:
+### Monitor the device:
 
 ```bash
 idf.py monitor
 ```
 ## Dependencies
 
-ESP-IDF (v4.x or higher)
+- ESP-IDF (v4.x or higher)
 
-cJSON library for JSON handling
+- cJSON library for JSON handling
 
-Troubleshooting
+- Troubleshooting
 
-Common Issues
+## Common Issues
 
-Camera Initialization Failed: Verify hardware connections and camera model.
+- Camera Initialization Failed: Verify hardware connections and camera model.
 
-MQTT Connection Error: Ensure the broker URL, port, and credentials are correct.
+- MQTT Connection Error: Ensure the broker URL, port, and credentials are correct.
 
 ## Debugging
 
-Use the ESP-IDF monitor to view logs and debug issues:
+- Use the ESP-IDF monitor to view logs and debug issues:
 
 ```bash
 idf.py monitor
@@ -166,9 +166,9 @@ idf.py monitor
 
 ## License
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+- This project is licensed under the MIT License. See the LICENSE file for details.
 
-Acknowledgments
+## Acknowledgments
 
 ESP-IDF documentation for its comprehensive resources.
 
