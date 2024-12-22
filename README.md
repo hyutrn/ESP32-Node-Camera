@@ -71,13 +71,13 @@ The camera is configured with the following pins and parameters:
 #define CAMERA_JPEG_QUALITY 12
 #define CAMERA_BUFFER_SIZE 64 * 1024
 
-MQTT Configuration
+### MQTT Configuration
 
 Broker URL: Set in mqtt_cfg.c
 
 Topic: Image data is published to /camera/image.
 
-Event Groups
+### Event Groups
 
 Event Groups are used for task synchronization:
 
@@ -85,9 +85,9 @@ EVENT_CAMERA_INIT_DONE: Indicates that the camera initialization is complete.
 
 EVENT_CLIENT_POSTED: Signifies that the Wi-Fi and server setup are finished.
 
-Task Description
+### Task Description
 
-cameraTask
+#### cameraTask
 
 Captures images using the ESP32-CAM module.
 
@@ -102,18 +102,20 @@ Sends image metadata and data via MQTT in JSON format:
   "data": "...base64 encoded image data..."
 }
 
-MQTT Communication
+#### MQTT Communication
 
 The pictureSend function in mqtt_cfg.c constructs the JSON payload and publishes it to the broker.
 
 Usage
 
-Clone the repository:
+## Clone the repository:
 
+```bash
 git clone https://github.com/hyutrn/ESP32_Node_Camera.git
 cd ESP32_Node_Camera
+```
 
-Configure the project:
+## Configure the project:
 
 idf.py menuconfig
 
@@ -121,16 +123,18 @@ Set Wi-Fi SSID and password.
 
 Configure the MQTT broker settings.
 
-Build and flash the firmware:
+## Build and flash the firmware:
 
+```bash 
 idf.py build
 idf.py flash
+```
+## Monitor the device:
 
-Monitor the device:
-
+```bash
 idf.py monitor
-
-Dependencies
+```
+## Dependencies
 
 ESP-IDF (v4.x or higher)
 
