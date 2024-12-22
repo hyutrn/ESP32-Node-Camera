@@ -1,35 +1,163 @@
-| Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-C6 | ESP32-H2 | ESP32-S2 | ESP32-S3 |
-| ----------------- | ----- | -------- | -------- | -------- | -------- | -------- | -------- |
+# ESP32 Camera Node Project
 
-# _Sample project_
+## Overview
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
+This project implements an ESP32-based camera node using the ESP-IDF framework. The camera captures images and transmits them via MQTT to a remote broker for further processing. The project integrates Wi-Fi connectivity, camera configuration, and MQTT communication.
 
-This is the simplest buildable example. The example is used by command `idf.py create-project`
-that copies the project to user specified path and set it's name. For more information follow the [docs page](https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html#start-a-new-project)
+## Features
 
+- **Camera Initialization**: Configures and initializes the ESP32-CAM module (AI-Thinker).
 
+- **Image Capture**: Captures images in RGB565 format with a frame size of QVGA.
 
-## How to use example
-We encourage the users to use the example as a template for the new projects.
-A recommended way is to follow the instructions on a [docs page](https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html#start-a-new-project).
+- **MQTT Communication**: Sends image data along with metadata (width, height, etc.) as a JSON payload.
 
-## Example folder contents
+- **Event-Driven Architecture**: Utilizes FreeRTOS Event Groups and Semaphores to synchronize tasks.
 
-The project **sample_project** contains one source file in C language [main.c](main/main.c). The file is located in folder [main](main).
+## Hardware Requirements
 
-ESP-IDF projects are built using CMake. The project build configuration is contained in `CMakeLists.txt`
-files that provide set of directives and instructions describing the project's source files and targets
-(executable, library, or both). 
+ESP32-CAM Module: AI-Thinker variant.
 
-Below is short explanation of remaining files in the project folder.
+Micro-USB Cable: For programming and power.
 
-```
-├── CMakeLists.txt
+Wi-Fi Network: Required for MQTT communication.
+
+## Software Requirements
+
+ESP-IDF: Development framework for ESP32.
+
+MQTT Broker: A running MQTT broker (e.g., Mosquitto, AWS IoT, or Flespi).
+
+cJSON Library: For constructing JSON payloads.
+
+## Project Structure
+
+ESP32_Camera_Node
 ├── main
-│   ├── CMakeLists.txt
-│   └── main.c
-└── README.md                  This is the file you are currently reading
-```
-Additionally, the sample project contains Makefile and component.mk files, used for the legacy Make based build system. 
-They are not used or needed when building with CMake and idf.py.
+│   ├── main.c          # Main application logic
+│   ├── wifi_pro.h/.c   # Wi-Fi configuration and initialization
+│   ├── server_cfg.h/.c # HTTP server configuration (if applicable)
+│   ├── mqtt_cfg.h/.c   # MQTT configuration and client setup
+│   ├── shared.h/.c     # Shared utilities and definitions
+├── lib
+│   ├── ...
+├── sdkconfig           # ESP-IDF configuration file
+└── README.md           # Project documentation
+
+## Configuration
+
+### Camera Configuration
+
+The camera is configured with the following pins and parameters:
+
+#define CAM_PIN_PWDN 32
+#define CAM_PIN_RESET -1
+#define CAM_PIN_XCLK 0
+#define CAM_PIN_SIOD 26
+#define CAM_PIN_SIOC 27
+#define CAM_PIN_D7 35
+#define CAM_PIN_D6 34
+#define CAM_PIN_D5 39
+#define CAM_PIN_D4 36
+#define CAM_PIN_D3 21
+#define CAM_PIN_D2 19
+#define CAM_PIN_D1 18
+#define CAM_PIN_D0 5
+#define CAM_PIN_VSYNC 25
+#define CAM_PIN_HREF 23
+#define CAM_PIN_PCLK 22
+
+#define CAMERA_FRAME_SIZE FRAMESIZE_QVGA
+#define CAMERA_JPEG_QUALITY 12
+#define CAMERA_BUFFER_SIZE 64 * 1024
+
+MQTT Configuration
+
+Broker URL: Set in mqtt_cfg.c
+
+Topic: Image data is published to /camera/image.
+
+Event Groups
+
+Event Groups are used for task synchronization:
+
+EVENT_CAMERA_INIT_DONE: Indicates that the camera initialization is complete.
+
+EVENT_CLIENT_POSTED: Signifies that the Wi-Fi and server setup are finished.
+
+Task Description
+
+cameraTask
+
+Captures images using the ESP32-CAM module.
+
+Retrieves image dimensions (width and height).
+
+Sends image metadata and data via MQTT in JSON format:
+
+{
+  "width": 320,
+  "height": 240,
+  "size": 76800,
+  "data": "...base64 encoded image data..."
+}
+
+MQTT Communication
+
+The pictureSend function in mqtt_cfg.c constructs the JSON payload and publishes it to the broker.
+
+Usage
+
+Clone the repository:
+
+git clone https://github.com/hyutrn/ESP32_Node_Camera.git
+cd ESP32_Node_Camera
+
+Configure the project:
+
+idf.py menuconfig
+
+Set Wi-Fi SSID and password.
+
+Configure the MQTT broker settings.
+
+Build and flash the firmware:
+
+idf.py build
+idf.py flash
+
+Monitor the device:
+
+idf.py monitor
+
+Dependencies
+
+ESP-IDF (v4.x or higher)
+
+cJSON library for JSON handling
+
+Troubleshooting
+
+Common Issues
+
+Camera Initialization Failed: Verify hardware connections and camera model.
+
+MQTT Connection Error: Ensure the broker URL, port, and credentials are correct.
+
+Debugging
+
+Use the ESP-IDF monitor to view logs and debug issues:
+
+idf.py monitor
+
+License
+
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+Acknowledgments
+
+ESP-IDF documentation for its comprehensive resources.
+
+AI-Thinker for the ESP32-CAM module.
+
+
