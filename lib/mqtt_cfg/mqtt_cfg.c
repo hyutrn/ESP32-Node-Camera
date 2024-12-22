@@ -43,8 +43,8 @@ esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
         break;
     case MQTT_EVENT_DATA:
         ESP_LOGI("MQTTWSS", "MQTT_EVENT_DATA");
-        printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
-        printf("DATA=%.*s\r\n", event->data_len, event->data);
+        //printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
+        //printf("DATA=%.*s\r\n", event->data_len, event->data);
         break;
     case MQTT_EVENT_ERROR:
         ESP_LOGI("MQTTWSS", "MQTT_EVENT_ERROR");
@@ -63,23 +63,55 @@ void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event
     mqtt_event_handler_cb(event_data);
 }
 
-void dataSend(esp_mqtt_client_handle_t client){
-    dht_num(GPIO_NUM_4);
-    mois_num(GPIO_NUM_39);
-    light_num(GPIO_NUM_25);
-    //Publish to MQTT Broker
-    // Tạo JSON để publish
-    char json_data[128];
-    //snprintf(json_data, sizeof(json_data),
-    //         "{\"temperature\": %.2f, \"moisture\": %d, \"light\": %d}",
-    //         temperature, moisture, light);
+// Hàm gửi ảnh tới broker
+void pictureSend(esp_mqtt_client_handle_t client, const uint8_t *data, size_t data_len, size_t width, size_t height, const char *topic){
+    // Kiểm tra dữ liệu và chủ đề
+    if (data == NULL || topic == NULL) {
+        ESP_LOGE("MQTT", "Topic or data is NULL");
+        return;
+    }
 
-    // Publish dữ liệu tới broker
-    int msg_id = esp_mqtt_client_publish(client, "/sensor/data", json_data, 0, 1, 0);
-    if (msg_id != -1) {
-        ESP_LOGI("MQTTWSS", "Data published successfully, msg_id=%d", msg_id);
+    // Tạo JSON chứa thông tin ảnh
+    cJSON *root = cJSON_CreateObject();
+    if (root == NULL) {
+        ESP_LOGE("MQTT", "Failed to create JSON object");
+        return;
+    }
+
+    cJSON_AddNumberToObject(root, "width", width);
+    cJSON_AddNumberToObject(root, "height", height);
+    cJSON_AddNumberToObject(root, "size", data_len);
+
+    // Chuyển đổi JSON thành chuỗi
+    char *json_string = cJSON_PrintUnformatted(root);
+    if (json_string == NULL) {
+        ESP_LOGE("MQTT", "Failed to convert JSON object to string");
+        cJSON_Delete(root);
+        return;
+    }
+
+    // Gửi dữ liệu ảnh qua MQTT
+    //int msg_id = esp_mqtt_client_publish(client, topic, (const char *)data, data_len, 2, 0);
+    int msg_id = esp_mqtt_client_publish(client, topic, json_string, strlen(json_string), 2, 0);
+
+    if (msg_id > 0) {
+        ESP_LOGI("MQTT", "Sent image data successfully to topic %s with msg_id=%d", topic, msg_id);
     } else {
-        ESP_LOGE("MQTTWSS", "Failed to publish data");
+        ESP_LOGE("MQTT", "Failed to send image data to topic %s", topic);
+    }
+
+    // Giải phóng bộ nhớ
+    cJSON_Delete(root);
+    free(json_string);
+}
+
+void testSend(esp_mqtt_client_handle_t client){
+    const char* topic = "/topic/qos0";
+    int msg_id = esp_mqtt_client_publish(client, topic, "flag send picture", 0, 1, 0);
+    if (msg_id > 0) {
+        ESP_LOGI("MQTT", "Sent image data successfully to topic: %s with msg_id=%d", topic, msg_id);
+    } else {
+        ESP_LOGE("MQTT", "Failed to send image data to topic: %s", topic);
     }
 }
 
@@ -103,16 +135,30 @@ void mqtt_app_start(void)
 }
 */
 
+
 void mqtt_app_start(void)
 {
+    /*
     const esp_mqtt_client_config_t mqtt_cfg = {
         .broker.address.uri = "wss://mqtt.eclipseprojects.io:443/mqtt",
         .broker.verification.certificate = (const char *)mqtt_cert_key_pem_start,
         .broker.verification.certificate_len = strlen((const char *)mqtt_cert_key_pem_start),
         .session.keepalive = 90
     };
+    */
 
-    ESP_LOGI("MQTTWSS", "[APP] Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
+    const esp_mqtt_client_config_t mqtt_cfg = {
+        .broker.address.uri = "mqtt://mqtt.flespi.io",
+        .broker.address.hostname = "mqtt://mqtt.flespi.io",
+        .broker.address.port = 1883,
+        .credentials.username = "ejkH5zHIZGRWVmg8cjgSKuDeWZoNhhgzrRl6BsOixEEEIgJ6bauQbQYGcPs5vyUd",
+        .credentials.client_id = "NODE CAMERA",
+        .credentials.authentication.password = NULL,
+        .session.keepalive = 90
+    };
+
+
+    ESP_LOGI("MQTT", "[APP] Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
     client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
     esp_mqtt_client_start(client);

@@ -23,7 +23,6 @@
 #include "client_cfg.h"
 #include "shared.h"
 #include "nvs_storage.h"
-#include "camera_lib.h"
 
 esp_err_t get_url_server(httpd_req_t *req);
 esp_err_t post_handler(httpd_req_t *req);
