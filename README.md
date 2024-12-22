@@ -32,17 +32,19 @@ cJSON Library: For constructing JSON payloads.
 
 ## Project Structure
 
-ESP32_Camera_Node
-├── main
-│   ├── main.c          # Main application logic
-│   ├── wifi_pro.h/.c   # Wi-Fi configuration and initialization
-│   ├── server_cfg.h/.c # HTTP server configuration (if applicable)
-│   ├── mqtt_cfg.h/.c   # MQTT configuration and client setup
-│   ├── shared.h/.c     # Shared utilities and definitions
-├── lib
-│   ├── ...
-├── sdkconfig           # ESP-IDF configuration file
-└── README.md           # Project documentation
+```bash
+- ESP32_Camera_Node
+- ├── main
+- │   ├── main.c          # Main application logic
+- │   ├── wifi_pro.h/.c   # Wi-Fi configuration and initialization
+- │   ├── server_cfg.h/.c # HTTP server configuration (if applicable)
+- │   ├── mqtt_cfg.h/.c   # MQTT configuration and client setup
+- │   ├── shared.h/.c     # Shared utilities and definitions
+- ├── lib
+- │   ├── ...
+- ├── sdkconfig           # ESP-IDF configuration file
+- └── README.md           # Project documentation
+```
 
 ## Configuration
 
@@ -73,8 +75,8 @@ ESP32_Camera_Node
 #define CAMERA_BUFFER_SIZE 64 * 1024
 
 ### MQTT Configuration
-
 ```
+
 - Broker URL: Set in mqtt_cfg.c
 
 - Topic: Image data is published to /camera/image.
@@ -158,7 +160,7 @@ MQTT Connection Error: Ensure the broker URL, port, and credentials are correct.
 
 Use the ESP-IDF monitor to view logs and debug issues:
 
-
+```bash
 idf.py monitor
 ```
 
