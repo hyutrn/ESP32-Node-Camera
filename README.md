@@ -48,8 +48,9 @@ ESP32_Camera_Node
 
 ### Camera Configuration
 
-The camera is configured with the following pins and parameters:
+- The camera is configured with the following pins and parameters:
 
+```bash
 #define CAM_PIN_PWDN 32
 #define CAM_PIN_RESET -1
 #define CAM_PIN_XCLK 0
@@ -73,9 +74,10 @@ The camera is configured with the following pins and parameters:
 
 ### MQTT Configuration
 
-Broker URL: Set in mqtt_cfg.c
+```
+- Broker URL: Set in mqtt_cfg.c
 
-Topic: Image data is published to /camera/image.
+- Topic: Image data is published to /camera/image.
 
 ### Event Groups
 
@@ -89,22 +91,24 @@ EVENT_CLIENT_POSTED: Signifies that the Wi-Fi and server setup are finished.
 
 #### cameraTask
 
-Captures images using the ESP32-CAM module.
+- Captures images using the ESP32-CAM module.
 
-Retrieves image dimensions (width and height).
+- Retrieves image dimensions (width and height).
 
-Sends image metadata and data via MQTT in JSON format:
+- Sends image metadata and data via MQTT in JSON format:
 
+```bash
 {
   "width": 320,
   "height": 240,
   "size": 76800,
   "data": "...base64 encoded image data..."
 }
+```
 
 #### MQTT Communication
 
-The pictureSend function in mqtt_cfg.c constructs the JSON payload and publishes it to the broker.
+- The pictureSend function in mqtt_cfg.c constructs the JSON payload and publishes it to the broker.
 
 Usage
 
@@ -117,11 +121,13 @@ cd ESP32_Node_Camera
 
 ## Configure the project:
 
+```bash 
 idf.py menuconfig
+```
 
-Set Wi-Fi SSID and password.
+- Set Wi-Fi SSID and password.
 
-Configure the MQTT broker settings.
+- Configure the MQTT broker settings.
 
 ## Build and flash the firmware:
 
@@ -148,13 +154,15 @@ Camera Initialization Failed: Verify hardware connections and camera model.
 
 MQTT Connection Error: Ensure the broker URL, port, and credentials are correct.
 
-Debugging
+## Debugging
 
 Use the ESP-IDF monitor to view logs and debug issues:
 
-idf.py monitor
 
-License
+idf.py monitor
+```
+
+## License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
 
