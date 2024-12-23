@@ -23,7 +23,13 @@ void scann(httpd_req_t *req) {
         .ssid = 0,
         .bssid = 0,
         .channel = 0,
-        .show_hidden = false
+        .show_hidden = false,
+        .scan_type = WIFI_SCAN_TYPE_ACTIVE,
+        .scan_time = {
+            .active.min = 50,
+            .active.max = 100,
+        },
+        .home_chan_dwell_time = 50
     };
     printf("Start scanning...");
     ESP_ERROR_CHECK(esp_wifi_scan_start(&scan_config, true));
@@ -164,10 +170,9 @@ void sta_connect_handler(void* arg, esp_event_base_t event_base,
             printf("STA IP: %s\n", ip_address);
         }
         */
-        //printf("STA connected successfully.\n");
-
-        // Lưu SSID và Password vào NVS
-        //save_wifi_credentials(sta_ssid, sta_password);
+        printf("STA connected successfully.\n");
+        //Lưu SSID và Password vào NVS
+        save_wifi_credentials(sta_ssid, sta_password);
 
         // Đặt bit sự kiện
         xEventGroupSetBits(wifi_event_group, WIFI_STA_CONNECTED_BIT);
@@ -218,6 +223,7 @@ void initialise_wifi(void)
     if (load_wifi_credentials(sta_ssid, sizeof(sta_ssid), sta_password, sizeof(sta_password))) {
         printf("Connecting to saved WiFi: SSID=%s\n", sta_ssid);
         flag_ap = wifi_ap_mode();
+        server_start();
         wifi_sta_mode();
 
         // Chờ sự kiện kết nối STA
@@ -231,12 +237,12 @@ void initialise_wifi(void)
         );
 
         if (bits & WIFI_STA_CONNECTED_BIT) {
+            //post_sta_connect(server_handle);
             printf("STA connected successfully! Proceeding...\n");
             
         }
-        server_start();
     } else {
-        printf("No saved WiFi credentials. Starting in AP mode.\n");
+        //printf("No saved WiFi credentials. Starting in AP mode.\n");
         flag_ap = wifi_ap_mode(); 
         server_start();
     }

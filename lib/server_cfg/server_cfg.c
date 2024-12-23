@@ -5,6 +5,7 @@ int flag_call_mqtt;
 int server_initialized;
 int register_node = 0;
 esp_err_t check_post_client;
+httpd_handle_t server_handle = NULL;
 
 //SERVER 
 //GET FILE
@@ -166,8 +167,6 @@ esp_err_t post_login_wifi(httpd_req_t *req) {
             }
         }
     }
-    // Gán bit sự kiện cho EVENT_CLIENT_POSTED
-    xEventGroupSetBits(shared_event_group, EVENT_CLIENT_POSTED);
     return ESP_OK;
 }
 
@@ -218,6 +217,10 @@ esp_err_t post_register_node(httpd_req_t *req) {
                     free(jsonString);
                 }
                 cJSON_Delete(root);
+
+                // Gán bit sự kiện cho EVENT_CLIENT_POSTED
+                xEventGroupSetBits(shared_event_group, EVENT_CLIENT_POSTED);
+
                 vTaskDelay(2000/portTICK_PERIOD_MS);
             }
             else {
@@ -245,9 +248,72 @@ esp_err_t post_register_node(httpd_req_t *req) {
         }
     }
     check_post_client = ESP_OK;
-
     return ESP_OK;
 }
+
+esp_err_t post_sta_connect(httpd_req_t *req) {
+    // Ensure query and query_len are initialized
+    char query[100];
+    size_t query_len = sizeof(query);
+
+    // Get URL query string from the HTTP request
+    if (httpd_req_get_url_query_str(req, query, query_len) == ESP_OK) {
+        if (sta_flag == 1) {  // Check if the STA mode is active
+            esp_netif_t *sta_netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+            esp_netif_get_ip_info(sta_netif, &ip_info);
+            sprintf(ip_address, "%d.%d.%d.%d", IP2STR(&ip_info.ip));
+            printf("STA IP: %s\n", ip_address);
+
+            // Create JSON {"status": 200, "ip": "xxx.xxx.xxx.xxx"}
+            cJSON *root = cJSON_CreateObject();
+            if (root == NULL) {
+                printf("Failed to create JSON object.\n");
+                return ESP_FAIL;  // Return failure if creating JSON object fails
+            }
+
+            // Add the IP address and status to the JSON object
+            cJSON_AddStringToObject(root, "ip", ip_address);
+            cJSON_AddNumberToObject(root, "status", 200);
+
+            char *jsonString = cJSON_PrintUnformatted(root);
+            if (jsonString != NULL) {
+                // Send the JSON response
+                printf("Response login wifi to user:\n%s\n", jsonString);
+                httpd_resp_set_type(req, "application/json");
+                httpd_resp_send(req, jsonString, strlen(jsonString));
+                free(jsonString);  // Free the JSON string memory
+            }
+
+            cJSON_Delete(root);  // Free the JSON object memory
+        } else {
+            printf("Not connected, sending error response\n");
+
+            // Create JSON {"status": 401}
+            cJSON *root = cJSON_CreateObject();
+            if (root == NULL) {
+                printf("Failed to create JSON object.\n");
+                return ESP_FAIL;  // Return failure if creating JSON object fails
+            }
+
+            // Add status code 401 to the JSON object
+            cJSON_AddNumberToObject(root, "status", 401);
+
+            char *jsonString = cJSON_PrintUnformatted(root);
+            if (jsonString != NULL) {
+                // Send the error response
+                printf("Response login wifi to user:\n%s\n", jsonString);
+                httpd_resp_set_type(req, "application/json");
+                httpd_resp_send(req, jsonString, strlen(jsonString));
+                free(jsonString);  // Free the JSON string memory
+            }
+
+            cJSON_Delete(root);  // Free the JSON object memory
+        }
+    }
+    return ESP_OK;  // Ensure the function always returns ESP_OK
+}
+
+
 
 httpd_handle_t server_start(void) {
     // Init SPIFFS files
@@ -299,9 +365,16 @@ httpd_handle_t server_start(void) {
         .user_ctx = NULL
     };
 
+    //POST noti WiFi STA connect
+    httpd_uri_t uri_post_sta_connect = {
+        .uri = "/sta_connect",
+        .method = HTTP_POST,
+        .handler = post_sta_connect,
+        .user_ctx = NULL
+    };
     //
 
-    httpd_handle_t server_handle = NULL;
+    //httpd_handle_t server_handle = NULL;
 
     if(httpd_start(&server_handle, &server_cfg) == ESP_OK){
         server_initialized = 1; // Đặt trạng thái thành công
@@ -311,6 +384,7 @@ httpd_handle_t server_start(void) {
         httpd_register_uri_handler(server_handle, &uri_ssid_available);
         httpd_register_uri_handler(server_handle, &uri_post_login_wifi);
         httpd_register_uri_handler(server_handle, &uri_post_register_node);
+        httpd_register_uri_handler(server_handle, &uri_post_sta_connect);
     }
     else {
         server_initialized = 0; // Đặt trạng thái thất bại

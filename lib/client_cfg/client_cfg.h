@@ -13,6 +13,7 @@
 #include "esp_http_client.h"
 #include "server_cfg.h"
 #include "wifi_pro.h"
+#include "shared.h"
 
 extern int client_flag;
 

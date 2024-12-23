@@ -25,10 +25,17 @@
 #include "nvs_storage.h"
 
 esp_err_t get_url_server(httpd_req_t *req);
-esp_err_t post_handler(httpd_req_t *req);
+esp_err_t get_css_file_handler(httpd_req_t* req);
+esp_err_t get_js_file_handler(httpd_req_t* req);
+esp_err_t get_ssid_available(httpd_req_t *req);
+esp_err_t post_login_wifi(httpd_req_t *req);
+esp_err_t post_register_node(httpd_req_t *req);
+esp_err_t post_sta_connect(httpd_req_t *req);
+
 httpd_handle_t server_start(void);
 void server_stop(httpd_handle_t server_handle);
 
+extern httpd_handle_t server_handle;
 extern int flag_call_mqtt;
 // Biến kiểm tra trạng thái
 extern int server_initialized;

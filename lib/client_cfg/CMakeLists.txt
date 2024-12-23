@@ -8,4 +8,5 @@ idf_component_register(SRCS ${SOURCES}
                     REQUIRES server_cfg
                     REQUIRES mqtt_cfg
                     REQUIRES json
+                    REQUIRES event_lib
 )
