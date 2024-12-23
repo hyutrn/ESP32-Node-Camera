@@ -117,7 +117,8 @@ cd ESP32_Node_Camera
 ```bash 
 idf.py menuconfig
 ```
-
+- Change flash size from 2Mb to 4Mb
+  
 - Set Wi-Fi SSID and password.
 
 - Configure the MQTT broker settings.
