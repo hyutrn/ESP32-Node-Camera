@@ -117,10 +117,8 @@ cd ESP32_Node_Camera
 ```bash 
 idf.py menuconfig
 ```
-- Change flash size from 2Mb to 4Mb
-  
-- Set Wi-Fi SSID and password.
-
+- Partition table: choose custom partition table CSV
+- Serial flasher config: change Flash size from 2MB to 4MB
 - Configure the MQTT broker settings.
 
 ### Build and flash the firmware:
@@ -136,7 +134,7 @@ idf.py monitor
 ```
 ## Dependencies
 
-- ESP-IDF (v4.x or higher)
+- ESP-IDF (v5.1.4 or higher)
 
 - cJSON library for JSON handling
 
