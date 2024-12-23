@@ -24,11 +24,13 @@ This project implements an ESP32-based camera node using the ESP-IDF framework. 
 
 ## Software Requirements
 
-- ESP-IDF: Development framework for ESP32.
+- ESP-IDF (v5.1.4 or higher): Development framework for ESP32.
 
 - MQTT Broker: A running MQTT broker (e.g., Mosquitto, AWS IoT, or Flespi).
 
 - cJSON Library: For constructing JSON payloads.
+
+- Base64 Library: For encode and decode data
 
 ## Project Structure
 
@@ -36,13 +38,44 @@ This project implements an ESP32-based camera node using the ESP-IDF framework. 
 - ESP32_Camera_Node
 - ├── main
 - │   ├── main.c          # Main application logic
-- │   ├── wifi_pro.h/.c   # Wi-Fi configuration and initialization
-- │   ├── server_cfg.h/.c # HTTP server configuration (if applicable)
-- │   ├── mqtt_cfg.h/.c   # MQTT configuration and client setup
-- │   ├── shared.h/.c     # Shared utilities and definitions
+- │   ├── CMakeLists.txt
+- │   ├── idf_component.yml 
 - ├── lib
-- │   ├── 
+- │   ├── wifi_pro        # Wi-Fi configuration and initialization
+- │   │  ├── wifi_pro.h
+- │   │  ├── wifi_pro.c
+- │   │  ├── CMakeLists.txt
+- │   ├── server_cfg      # HTTP server configuration (if applicable)
+- │   │  ├── server_cfg.h
+- │   │  ├── server_cfg.c
+- │   │  ├── CMakeLists.txt
+- │   ├── mqtt_cfg        # MQTT configuration and client setup
+- │   │  ├── mqtt_cfg.h
+- │   │  ├── mqtt_cfg.c
+- │   │  ├── CMakeLists.txt
+- │   ├── project_system_files
+- │   │  ├── project_system_files.h
+- │   │  ├── project_system_files.c
+- │   │  ├── CMakeLists.txt
+- │   ├── nvs_storage
+- │   │  ├── nvs_storage.h
+- │   │  ├── nvs_storage.c
+- │   │  ├── CMakeLists.txt
+- │   ├── event_lib
+- │   │  ├── shared.h
+- │   │  ├── shared.c
+- │   │  ├── CMakeLists.txt
+- │   ├── client_cfg
+- │   │  ├── client_cfg.h
+- │   │  ├── client_cfg.c
+- │   │  ├── CMakeLists.txt
+- ├── spiffs_data
+- │   ├── app.js
+- │   ├── index.html
+- │   ├── style.css
 - ├── sdkconfig           # ESP-IDF configuration file
+- ├── dependencies.lock
+- ├── partition.csv
 - └── README.md           # Project documentation
 ```
 
@@ -72,13 +105,13 @@ This project implements an ESP32-based camera node using the ESP-IDF framework. 
 
 #define CAMERA_FRAME_SIZE FRAMESIZE_VGA
 #define CAMERA_JPEG_QUALITY 10
+```
 
 ### MQTT Configuration
-```
 
 - Broker URL: Set in mqtt_cfg.c
 
-- Topic: Image data is published to /camera/image.
+- Topic: Image data is published to /nodes/cameras/id_node
 
 ### Event Groups
 
