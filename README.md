@@ -94,18 +94,10 @@ This project implements an ESP32-based camera node using the ESP-IDF framework. 
 
 - Captures images using the ESP32-CAM module.
 
-- Retrieves image dimensions (width and height).
+- Encoded with Base64
 
-- Sends image metadata and data via MQTT in JSON format:
+- Sends image after encode via MQTT in string format
 
-```bash
-{
-  "width": 320,
-  "height": 240,
-  "size": 76800,
-  "data": "...base64 encoded image data..."
-}
-```
 
 #### MQTT Communication
 
