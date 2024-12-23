@@ -41,7 +41,7 @@ This project implements an ESP32-based camera node using the ESP-IDF framework. 
 - │   ├── mqtt_cfg.h/.c   # MQTT configuration and client setup
 - │   ├── shared.h/.c     # Shared utilities and definitions
 - ├── lib
-- │   ├── ...
+- │   ├── 
 - ├── sdkconfig           # ESP-IDF configuration file
 - └── README.md           # Project documentation
 ```
@@ -70,9 +70,8 @@ This project implements an ESP32-based camera node using the ESP-IDF framework. 
 #define CAM_PIN_HREF 23
 #define CAM_PIN_PCLK 22
 
-#define CAMERA_FRAME_SIZE FRAMESIZE_QVGA
-#define CAMERA_JPEG_QUALITY 12
-#define CAMERA_BUFFER_SIZE 64 * 1024
+#define CAMERA_FRAME_SIZE FRAMESIZE_VGA
+#define CAMERA_JPEG_QUALITY 10
 
 ### MQTT Configuration
 ```
