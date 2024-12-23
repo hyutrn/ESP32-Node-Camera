@@ -76,7 +76,6 @@ void pictureSend(esp_mqtt_client_handle_t client, const char* base64_image, cons
 
 void mqtt_app_start(void)
 {
-    /*
     //Config for using local broker
     const esp_mqtt_client_config_t mqtt_cfg = {
         .broker.address.uri = "mqtt://rasp.local",
@@ -87,9 +86,8 @@ void mqtt_app_start(void)
         .credentials.authentication.password = "test",
         .session.keepalive = 90
     };
-    */
 
-    
+    /*
     //Config for using flepsi.io broker
     const esp_mqtt_client_config_t mqtt_cfg = {
         .broker.address.uri = "mqtt://mqtt.flespi.io",
@@ -100,7 +98,7 @@ void mqtt_app_start(void)
         .credentials.authentication.password = NULL,
         .session.keepalive = 90
     };
-    
+    */
 
     ESP_LOGI("MQTT", "[APP] Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
     client = esp_mqtt_client_init(&mqtt_cfg);
