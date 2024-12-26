@@ -26,6 +26,7 @@ esp_err_t client_event_get_handler(esp_http_client_event_handle_t evt)
                     // Lưu giá trị node_id vào biến id_node dưới dạng chuỗi
                     snprintf(id_node, sizeof(id_node), "%d", node_id_item->valueint);
                     ESP_LOGI("HTTP", "Received node_id: %s", id_node);  // In ra giá trị của id_node
+                    save_id_node(id_node);
                     client_flag = 1;  // Thành công
                 } else {
                     ESP_LOGE("HTTP", "node_id not found in JSON response");
@@ -84,6 +85,7 @@ esp_err_t client_event_post_handler(esp_http_client_event_handle_t evt)
                     // Lưu giá trị node_id vào biến id_node dưới dạng chuỗi
                     snprintf(id_node, sizeof(id_node), "%d", node_id_item->valueint);
                     ESP_LOGI("HTTP", "Received node_id: %s", id_node);  // In ra giá trị của id_node
+                    save_id_node(id_node);
                     client_flag = 1;  // Thành công
                 } else {
                     ESP_LOGE("HTTP", "node_id not found in JSON response");
@@ -104,13 +106,17 @@ esp_err_t client_event_post_handler(esp_http_client_event_handle_t evt)
 
 esp_err_t client_post()
 {
-    // Tạo chuỗi URL cho phương thức POST
-    char client_post_url[code_len];
-    snprintf(client_post_url, sizeof(client_post_url), "http://%s:8080/register_node?code=CKABSKJCcabkjsb2kbjkcabsjkabsj2bjkbjcaksbcj", ip_gateway);
+    char client_post_url[256];  // Đảm bảo kích thước đủ lớn
+    snprintf(client_post_url, sizeof(client_post_url),
+             "http://%s:8080/register_node?code=CKABSKJCcabkjsb2kbjkcabsjkabsj2bjkbjcaksbcj", ip_gateway);
 
-    //register_node?code=CKABSKJCcabkjsb2kbjkcabsjkabsj2bjkbjcaksbcjkasb298@21^%26$cbaskjbcajkcbajskbcjaksbcajskbcasjk
-    //register_node?code=CKABSKJCcabkjsb2kbjkcabsjkabsj2bjkbjcaksbcjkasb298@21^&$cbaskjbcajkcbajskbcjaksbcajskbcasjk
-    printf("%s\n", client_post_url);
+    load_id_node(id_node, sizeof(id_node));
+    if (strlen(id_node) > 0) {
+        strncat(client_post_url, "&id_node=", sizeof(client_post_url) - strlen(client_post_url) - 1);
+        strncat(client_post_url, id_node, sizeof(client_post_url) - strlen(client_post_url) - 1);
+    } else {
+        strncat(client_post_url, "&id_node=-1", sizeof(client_post_url) - strlen(client_post_url) - 1);
+    }
 
     esp_http_client_config_t config_post = {
         .url = client_post_url,

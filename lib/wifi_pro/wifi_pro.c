@@ -112,7 +112,7 @@ void scann(httpd_req_t *req) {
 esp_err_t wifi_ap_mode(void) {
     wifi_config_t wifi_config = {
         .ap = {
-            .ssid = "NODE",
+            .ssid = "NODE_CAMERA",
             .ssid_len = 0,
             .max_connection = 1,
             .password = "12345678",
@@ -172,7 +172,7 @@ void sta_connect_handler(void* arg, esp_event_base_t event_base,
         */
         printf("STA connected successfully.\n");
         //Lưu SSID và Password vào NVS
-        save_wifi_credentials(sta_ssid, sta_password);
+        //save_wifi_credentials(sta_ssid, sta_password);
 
         // Đặt bit sự kiện
         xEventGroupSetBits(wifi_event_group, WIFI_STA_CONNECTED_BIT);
@@ -190,7 +190,6 @@ void ap_connect_handler(void* arg, esp_event_base_t event_base,
 }
 
 //Khoi tao WiFi, Server 
-//demo khi chua co ssid password
 void initialise_wifi(void)
 {
     ESP_ERROR_CHECK(esp_netif_init());
@@ -222,9 +221,20 @@ void initialise_wifi(void)
     // Kiểm tra và load SSID, Password từ NVS
     if (load_wifi_credentials(sta_ssid, sizeof(sta_ssid), sta_password, sizeof(sta_password))) {
         printf("Connecting to saved WiFi: SSID=%s\n", sta_ssid);
-        flag_ap = wifi_ap_mode();
-        server_start();
-        wifi_sta_mode();
+        //flag_ap = wifi_ap_mode();
+        //server_start();
+        wifi_config_t wifi_config = {
+            .sta = {
+                .ssid = {0},  // Khởi tạo chuỗi rỗng
+                .password = {0} // Khởi tạo chuỗi rỗng
+            }
+        };
+        strncpy((char *)wifi_config.sta.ssid, sta_ssid, sizeof(wifi_config.sta.ssid) - 1);
+        strncpy((char *)wifi_config.sta.password, sta_password, sizeof(wifi_config.sta.password) - 1);
+
+        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+        ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
+        ESP_ERROR_CHECK(esp_wifi_connect());
 
         // Chờ sự kiện kết nối STA
         printf("Waiting for STA to connect...\n");
@@ -236,14 +246,26 @@ void initialise_wifi(void)
             portMAX_DELAY // Chờ vô hạn
         );
 
-        if (bits & WIFI_STA_CONNECTED_BIT) {
-            //post_sta_connect(server_handle);
+        if (bits & WIFI_STA_CONNECTED_BIT) 
+        {
             printf("STA connected successfully! Proceeding...\n");
-            
+            load_ip_gateway(ip_gateway, sizeof(ip_gateway));
+            load_id_node(id_node, sizeof(id_node)); 
+            if(strlen(ip_gateway) > 0) 
+            {
+                printf("ip_gateway: %s\n", ip_gateway);
+                xEventGroupSetBits(shared_event_group, EVENT_CLIENT_POSTED);
+            } else {
+                ESP_LOGI("RECONNECT", "Failed to reconnect to server!\n");
+                flag_ap = wifi_ap_mode();
+                server_start();
+            }
         }
-    } else {
-        //printf("No saved WiFi credentials. Starting in AP mode.\n");
+    } 
+    else {
+        printf("No saved WiFi credentials. Starting in AP mode.\n");
         flag_ap = wifi_ap_mode(); 
         server_start();
     }
 }
+

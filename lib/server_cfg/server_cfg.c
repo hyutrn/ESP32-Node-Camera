@@ -220,7 +220,6 @@ esp_err_t post_register_node(httpd_req_t *req) {
 
                 // Gán bit sự kiện cho EVENT_CLIENT_POSTED
                 xEventGroupSetBits(shared_event_group, EVENT_CLIENT_POSTED);
-
                 vTaskDelay(2000/portTICK_PERIOD_MS);
             }
             else {

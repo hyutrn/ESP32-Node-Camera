@@ -53,7 +53,7 @@ static camera_config_t camera_config = {
     .pin_pwdn = CAM_PIN_PWDN,
     .pin_reset = CAM_PIN_RESET,
     .pin_xclk = CAM_PIN_XCLK,
-    .pin_sccb_sda = CAM_PIN_SIOD,
+    .pin_sccb_sda = CAM_PIN_SIOD,   
     .pin_sccb_scl = CAM_PIN_SIOC,
 
     .pin_d7 = CAM_PIN_D7,
@@ -141,11 +141,13 @@ void cameraTask(void *arg) {
         char* base64_image = jpeg_to_base64(pic);
         if (base64_image) {
             //printf("Base64 Encoded Image:\n%s\n", base64_image);
+            load_id_node(id_node, sizeof(id_node)); 
             //Chuỗi topic MQTT cho ảnh
             char topic_image[150];  // Tạo một mảng để chứa chuỗi topic
 
-            //Nối chuỗi "/nodes/cameras/" với id_node
-            snprintf(topic_image, sizeof(topic_image), "/nodes/cameras/%s", id_node);
+            //Nối chuỗi "nodes/cameras/" với id_node
+            snprintf(topic_image, sizeof(topic_image), "nodes/cameras/%s", id_node);
+            printf("Topic: %s\n", topic_image);
 
             pictureSend(client, base64_image, topic_image);
             xEventGroupWaitBits(event_group, PUBLISH_IMAGE, pdTRUE, pdTRUE, portMAX_DELAY);
@@ -180,6 +182,7 @@ void app_main(void) {
     //Chờ đợi sự kiện EVENT_CLIENT_POSTED
     printf("Waiting for init node...\n");
     xEventGroupWaitBits(shared_event_group, EVENT_CLIENT_POSTED, pdTRUE, pdTRUE, portMAX_DELAY);
+    save_ip_gateway(ip_gateway);
     printf("Init Wifi and Server done!\n");
 
     // Khởi tạo camera và kiểm tra lỗi

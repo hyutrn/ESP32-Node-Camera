@@ -1,7 +1,7 @@
 {
     "version":            "1.1",
     "project_name":       "camera_node_v1",
-    "project_version":    "3f2b5eb-dirty",
+    "project_version":    "3205f0f-dirty",
     "project_path":       "C:/Users/TrongHuy/ProjectIDF/camera_node_v1",
     "idf_path":           "C:/Users/TrongHuy/esp/v5.1.4/esp-idf",
     "build_dir":          "C:/Users/TrongHuy/ProjectIDF/camera_node_v1/build",

@@ -76,20 +76,28 @@ void pictureSend(esp_mqtt_client_handle_t client, const char* base64_image, cons
 
 void mqtt_app_start(void)
 {
-    /*
+    load_id_node(id_node, sizeof(id_node));
+    char last_topic[150];
+    snprintf(last_topic, sizeof(last_topic), "nodes/cameras/%s", id_node);
+
     //Config for using local broker
     const esp_mqtt_client_config_t mqtt_cfg = {
         .broker.address.uri = "mqtt://rasp.local",
-        //.broker.address.hostname = "mqtt://mqtt.flespi.io",
+        //.broker.address.hostname = "mqtt://rasp.local",
         .broker.address.port = 8003,
         .credentials.username = "node",
         //.credentials.client_id = "node camera",
         .credentials.authentication.password = "test",
-        .session.keepalive = 90
+        .session.keepalive = 10,
+        //.last_will.topic = "nodes/sensors",
+        .session.last_will.msg = "offline",
+        .session.last_will.msg_len = 7,
+        .session.last_will.qos = 1,
+        .session.last_will.topic = last_topic,
+        .session.last_will.retain = 0,
     };
-    */
 
-    
+    /*
     //Config for using flepsi.io broker
     const esp_mqtt_client_config_t mqtt_cfg = {
         .broker.address.uri = "mqtt://mqtt.flespi.io",
@@ -100,7 +108,7 @@ void mqtt_app_start(void)
         .credentials.authentication.password = NULL,
         .session.keepalive = 90
     };
-    
+    */
 
     ESP_LOGI("MQTT", "[APP] Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
     client = esp_mqtt_client_init(&mqtt_cfg);
